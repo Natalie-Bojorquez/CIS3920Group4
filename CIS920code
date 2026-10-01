@@ -1,0 +1,298 @@
+
+CIS3920-Group4
+CIS3920-Group4_
+[3920] Career Change Prediction
+Data file:
+
+https://raw.githubusercontent.com/vjavaly/Baruch-CIS-3920/refs/heads/main/data/career_change_prediction_100K.csv
+EDA Notes
+def sample and standard pandas
+pie chart over count bar graph
+series.unique
+lets try a Pearson correlation matrix? in the EDA file nat to add in bar graphs from CIS 3120
+important to look for missing values **if so you need to clean it
+most visualizations to be done in matplotlib/seaborn, skip the pandas bcuz lame
+most visualizations to be done in matplotlib/seaborn, skip the pandas bcuz lame
+try using colormap if it works
+once decide on what visualizations are the best! adjust to side by side for visualizations
+
+[ ]
+from datetime import datetime
+print(f'Run time: {datetime.now().strftime("%D %T")}')
+Run time: 09/30/26 19:33:46
+
+[ ]
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt     # same as 'import matplotlib.pyplot as plt'
+import seaborn as sns
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+
+[ ]
+# Read data file
+# Field separator is ','
+df = pd.read_csv('https://raw.githubusercontent.com/vjavaly/Baruch-CIS-3920/refs/heads/main/data/career_change_prediction_100K.csv',
+                 sep=',')
+Viewing Data
+
+[ ]
+# Display shape of dataframe
+df.shape
+(100000, 25)
+
+[ ]
+# Display info about dataframe
+df.info()  # 100,000 entries
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 100000 entries, 0 to 99999
+Data columns (total 25 columns):
+ #   Column                         Non-Null Count   Dtype  
+---  ------                         --------------   -----  
+ 0   Employee ID                    100000 non-null  int64  
+ 1   Employer ID                    100000 non-null  int64  
+ 2   Field of Study                 100000 non-null  object 
+ 3   Current Occupation             100000 non-null  object 
+ 4   Age                            99965 non-null   float64
+ 5   Gender                         99791 non-null   object 
+ 6   Years of Experience            99514 non-null   float64
+ 7   Education Level                99696 non-null   object 
+ 8   Industry Growth Rate           99401 non-null   object 
+ 9   Job Satisfaction Level         99528 non-null   object 
+ 10  Work-Life Balance              99603 non-null   object 
+ 11  # Job Opportunities            99610 non-null   float64
+ 12  Salary                         99653 non-null   float64
+ 13  Job Security Level             100000 non-null  object 
+ 14  Interested in Career Change    100000 non-null  object 
+ 15  Skills Gap                     100000 non-null  object 
+ 16  Family Influence Level         74640 non-null   object 
+ 17  Has Mentor                     99265 non-null   object 
+ 18  Has Certification              99367 non-null   object 
+ 19  Has Freelancing Experience     100000 non-null  object 
+ 20  Willing to Relocate            100000 non-null  object 
+ 21  Professional Network Strength  100000 non-null  object 
+ 22  # Career Change Events         100000 non-null  int64  
+ 23  Technical Proficiency Level    100000 non-null  object 
+ 24  Likely to Change Occupation    100000 non-null  object 
+dtypes: float64(4), int64(3), object(18)
+memory usage: 19.1+ MB
+
+[ ]
+# Display column datatypes
+df.dtypes
+
+
+[ ]
+# Filter for numeric columns
+numeric_df = df.select_dtypes(include=[np.number])
+numeric_df.columns  # Continuous variables
+Index(['Employee ID', 'Employer ID', 'Age', 'Years of Experience',
+       '# Job Opportunities', 'Salary', '# Career Change Events'],
+      dtype='object')
+
+[ ]
+# Filter for non-numeric columns
+object_df = df.select_dtypes(exclude=[np.number])
+object_df.columns # Discrete/Categorical variables
+Index(['Field of Study', 'Current Occupation', 'Gender', 'Education Level',
+       'Industry Growth Rate', 'Job Satisfaction Level', 'Work-Life Balance',
+       'Job Security Level', 'Interested in Career Change', 'Skills Gap',
+       'Family Influence Level', 'Has Mentor', 'Has Certification',
+       'Has Freelancing Experience', 'Willing to Relocate',
+       'Professional Network Strength', 'Technical Proficiency Level',
+       'Likely to Change Occupation'],
+      dtype='object')
+
+[ ]
+# Display unique values for non-numerical columns
+for col in object_df.columns:         # iterates through each non-numeric column name
+  print(f'{col}: {object_df[col].unique()}', end = '\n''\n') # print non-numeric column name with column's unique values. Formatting ending each print statement with a double new line.
+
+Field of Study: ['Biology' 'Economics' 'Medicine' 'Computer Science' 'Psychology'
+ 'Business' 'Education' 'Law' 'Mechanical Engineering' 'Arts']
+
+Current Occupation: ['Economist' 'Doctor' 'Psychologist' 'Lawyer' 'Biologist' 'Teacher'
+ 'Artist' 'Business Analyst' 'Software Developer' 'Mechanical Engineer']
+
+Gender: ['Female' 'Male' nan]
+
+Education Level: ["Bachelor's" "Master's" 'PhD' 'High School' nan]
+
+Industry Growth Rate: ['Medium' 'High' 'Low' nan]
+
+Job Satisfaction Level: ['Low' 'Moderate' 'High' nan]
+
+Work-Life Balance: ['Excellent' 'Moderate' 'Poor' 'Good' nan]
+
+Job Security Level: ['Excellent' 'Moderate' 'Poor']
+
+Interested in Career Change: ['No' 'Yes']
+
+Skills Gap: ['High' 'Low' 'Moderate']
+
+Family Influence Level: ['High' 'Low' nan 'Medium']
+
+Has Mentor: ['N' 'Y' nan]
+
+Has Certification: ['N' 'Y' nan]
+
+Has Freelancing Experience: ['N' 'Y']
+
+Willing to Relocate: ['No' 'Yes']
+
+Professional Network Strength: ['Strong' 'Weak' 'Average']
+
+Technical Proficiency Level: ['Intermediate' 'Beginner' 'Expert']
+
+Likely to Change Occupation: ['Likely' 'Unlikely']
+
+
+[ ]
+# Replace missing numeric values with an arithmetic (mean or median) strategy
+#  Could also have used strategy='median'
+imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+df['Age'] = imp_mean.fit_transform(df[['Age']])
+
+[ ]
+df['Age'].unique()
+array([38.        , 44.        , 59.        , 57.        , 36.        ,
+       43.        , 34.        , 20.        , 51.        , 55.        ,
+       39.        , 45.        , 42.        , 21.        , 49.        ,
+       32.        , 48.        , 23.        , 53.        , 47.        ,
+       58.        , 56.        , 35.        , 25.        , 37.        ,
+       27.        , 30.        , 31.        , 50.        , 54.        ,
+       52.        , 46.        , 41.        , 24.        , 33.        ,
+       40.        , 29.        , 26.        , 22.        , 28.        ,
+       39.60239888])
+
+[ ]
+# Replace missing non-numeric values with a most_frequent (mode) strategy
+imp_most_freq = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
+df['Gender'] = imp_most_freq.fit_transform(df[['Gender']]).ravel()
+df['Education Level'] = imp_most_freq.fit_transform(df[['Education Level']]).ravel()
+
+
+[ ]
+df['Gender'].unique()
+array(['Female', 'Male'], dtype=object)
+
+[ ]
+df['Education Level'].unique()
+array(["Bachelor's", "Master's", 'PhD', 'High School'], dtype=object)
+
+[ ]
+# Differentiate Ordinal and Nominal valued categorical columns
+
+
+[ ]
+# Check for missing values
+df.isnull().sum()
+
+
+[ ]
+# Display the # of unique values for column Employee_ID
+df['Employee ID'].nunique() # check to see column's number of unique values
+                           # 99,747 != 100,000 rows ... duplicate values
+99747
+
+[ ]
+# Check to see if duplicate Employee IDs have different Employer IDs
+
+
+
+[ ]
+# Count amount of duplicated rows
+df.duplicated().sum()
+np.int64(253)
+
+[ ]
+# Display duplicated rows
+df[df.duplicated(keep=False)]
+
+ #too many columns? maybe we go back a step to analyze it better
+
+Cleaning Data
+
+[ ]
+# Remove duplicate rows based on all columns keeping only the first occurrence of each unique row
+df.drop_duplicates(inplace=True) # inplace = True to modify original dataframe
+
+[ ]
+# Confirm removed duplicated rows
+df.duplicated().sum()
+np.int64(0)
+
+[ ]
+# Display updated dataframe shape
+df.shape
+(99747, 25)
+
+[ ]
+# Display updated dataframe info
+# Potentially drop these columns free lance experience, willing to relocate
+# Maybe drop Employer IF
+df.info()
+<class 'pandas.core.frame.DataFrame'>
+Index: 99747 entries, 0 to 99999
+Data columns (total 25 columns):
+ #   Column                         Non-Null Count  Dtype  
+---  ------                         --------------  -----  
+ 0   Employee ID                    99747 non-null  int64  
+ 1   Employer ID                    99747 non-null  int64  
+ 2   Field of Study                 99747 non-null  object 
+ 3   Current Occupation             99747 non-null  object 
+ 4   Age                            99713 non-null  float64
+ 5   Gender                         99542 non-null  object 
+ 6   Years of Experience            99263 non-null  float64
+ 7   Education Level                99444 non-null  object 
+ 8   Industry Growth Rate           99149 non-null  object 
+ 9   Job Satisfaction Level         99276 non-null  object 
+ 10  Work-Life Balance              99350 non-null  object 
+ 11  # Job Opportunities            99357 non-null  float64
+ 12  Salary                         99402 non-null  float64
+ 13  Job Security Level             99747 non-null  object 
+ 14  Interested in Career Change    99747 non-null  object 
+ 15  Skills Gap                     99747 non-null  object 
+ 16  Family Influence Level         74454 non-null  object 
+ 17  Has Mentor                     99017 non-null  object 
+ 18  Has Certification              99114 non-null  object 
+ 19  Has Freelancing Experience     99747 non-null  object 
+ 20  Willing to Relocate            99747 non-null  object 
+ 21  Professional Network Strength  99747 non-null  object 
+ 22  # Career Change Events         99747 non-null  int64  
+ 23  Technical Proficiency Level    99747 non-null  object 
+ 24  Likely to Change Occupation    99747 non-null  object 
+dtypes: float64(4), int64(3), object(18)
+memory usage: 19.8+ MB
+
+[ ]
+# Comfirm all unique values for Employee ID
+df['Employee ID'].nunique() # 99,747 == 99,747,000 rows
+99747
+
+[ ]
+# Make column Employee ID the index column
+df.set_index('Employee ID', inplace=True)
+df.head() # show first 5
+
+
+[ ]
+# Display statistical summary of numeric columns
+df.describe() # NOT YET accounted for null values
+
+
+[ ]
+# Display statistics for non-numerical data
+object_df.describe() # NOT YET accounted for null values
+
+
+[ ]
+
+Start coding or generate with AI.
+Colab paid products
+-
+Cancel contracts here
