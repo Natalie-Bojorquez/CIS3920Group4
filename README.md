@@ -2,7 +2,7 @@
 
 This is our group project for CIS 3920 
 
-It will include EDA, Dat prep, and finally actually training models to predict. 
+It will include EDA, Data prep, and finally actually training models to predict. 
 
 ## Data file:
 
